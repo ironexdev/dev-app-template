@@ -1,0 +1,64 @@
+version: "3.9"
+
+services:
+  php-fpm:
+    build:
+      context: .
+      dockerfile: ./etc/php-fpm/Dockerfile
+    container_name: app-template_php-fpm
+    networks:
+      - private
+      - public
+    volumes:
+      - ./app:/app
+
+  app-template:
+    build:
+      context: .
+      dockerfile: ./etc/nginx/Dockerfile
+    container_name: app-template_nginx
+    depends_on:
+      - php-fpm
+    networks:
+      - public
+      - shared
+    volumes:
+      - ./app:/app
+      - ./etc/nginx/default.conf:/etc/nginx/conf.d/default.conf
+
+  mysql:
+    build:
+      context: .
+      dockerfile: ./etc/mysql/Dockerfile
+    container_name: app-template_mysql
+    environment:
+      MYSQL_DATABASE: "mysql"
+      MYSQL_PASSWORD: "mysql"
+      MYSQL_ROOT_PASSWORD: "mysql"
+      MYSQL_USER: "mysql"
+    networks:
+      - private
+    platform: linux/amd64
+    volumes:
+      - mysql:/var/lib/mysql
+
+  adminer:
+    build:
+      context: .
+      dockerfile: ./etc/adminer/Dockerfile
+    container_name: app-template_adminer
+    environment:
+      ADMINER_DEFAULT_SERVER: mysql
+    networks:
+      - private
+      - public
+
+networks:
+  private:
+  public:
+  shared:
+    external: true
+    name: shared
+
+volumes:
+  mysql:
